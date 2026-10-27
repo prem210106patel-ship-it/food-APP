@@ -1,4 +1,4 @@
-import { Search, MapPin, Star, ArrowRight, Bike, Clock, Tag, Sparkles, MessageCircle } from 'lucide-react';
+import { Search, MapPin, Star, ArrowRight, Bike, Clock, Tag, Sparkles, MessageCircle, Leaf, Flame } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase, formatCurrency } from '../lib/supabase.js';
@@ -9,6 +9,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [featuredRestaurants, setFeaturedRestaurants] = useState([]);
   const [popularFoods, setPopularFoods] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recDietary, setRecDietary] = useState('');
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -43,6 +45,17 @@ export default function Home() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ limit: '8' });
+    if (recDietary) params.set('dietary', recDietary);
+    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recommendations?${params}`, {
+      headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
+    })
+      .then(res => res.json())
+      .then(data => setRecommendations(data.recommendations || []))
+      .catch(() => setRecommendations([]));
+  }, [recDietary]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -175,6 +188,50 @@ export default function Home() {
                   <h3 className="font-display font-semibold text-sm text-charcoal-800 group-hover:text-orange-600 line-clamp-2">{food.name}</h3>
                   <p className="text-xs text-ink-400 mt-0.5">{food.restaurant?.name}</p>
                   <p className="font-bold text-orange-600 mt-2">{formatCurrency(food.price)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {recommendations.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold font-display text-charcoal-800 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-orange-500" /> Recommended for you
+              </h2>
+              <p className="text-sm text-ink-400 mt-0.5">Personalized picks based on popularity and rating</p>
+            </div>
+            <div className="flex gap-2">
+              {['', 'vegetarian', 'vegan'].map((d) => (
+                <button key={d || 'all'} onClick={() => setRecDietary(d)} className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap ${recDietary === d ? 'bg-orange-500 text-white' : 'bg-white border border-ink-200 text-ink-600'}`}>
+                  {d === 'vegetarian' ? <span className="flex items-center gap-1"><Leaf className="w-3 h-3" /> Veg</span> : d === 'vegan' ? 'Vegan' : 'All'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {recommendations.map((food) => (
+              <Link
+                key={food.id}
+                to={`/restaurants/${food.restaurant?.slug}`}
+                className="group bg-white rounded-2xl overflow-hidden border border-ink-100 hover:shadow-md transition-all"
+              >
+                <div className="h-32 bg-cream-100">
+                  {food.image_url ? <img src={food.image_url} alt={food.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" /> : <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-ink-200">{food.name.charAt(0)}</div>}
+                </div>
+                <div className="p-3">
+                  <div className="flex items-start justify-between gap-1">
+                    <h3 className="font-display font-semibold text-sm text-charcoal-800 group-hover:text-orange-600 line-clamp-2">{food.name}</h3>
+                    {food.dietary_labels?.includes('vegetarian') && <Leaf className="w-3.5 h-3.5 text-green-500 shrink-0" />}
+                  </div>
+                  <p className="text-xs text-ink-400 mt-0.5">{food.restaurant?.name}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="font-bold text-orange-600 text-sm">{formatCurrency(food.price)}</p>
+                    {food.restaurant?.rating > 0 && <span className="flex items-center gap-0.5 text-xs text-ink-500"><Star className="w-3 h-3 fill-orange-500 text-orange-500" />{Number(food.restaurant.rating).toFixed(1)}</span>}
+                  </div>
                 </div>
               </Link>
             ))}

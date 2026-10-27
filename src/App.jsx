@@ -27,6 +27,7 @@ import RestaurantDashboard from './pages/restaurant/Dashboard.jsx';
 import RestaurantOrders from './pages/restaurant/Orders.jsx';
 import RestaurantMenu from './pages/restaurant/Menu.jsx';
 import RestaurantTables from './pages/restaurant/Tables.jsx';
+import RestaurantSettings from './pages/restaurant/Settings.jsx';
 import QrTableMenu from './pages/qr/TableMenu.jsx';
 import QrOrderTrack from './pages/qr/OrderTrack.jsx';
 import QrScan from './pages/qr/Scan.jsx';
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="orders" element={<RestaurantOrders />} />
         <Route path="menu" element={<RestaurantMenu />} />
         <Route path="tables" element={<RestaurantTables />} />
+        <Route path="settings" element={<RestaurantSettings />} />
       </Route>
 
       <Route path="/qr/table/:token" element={<QrTableMenu />} />

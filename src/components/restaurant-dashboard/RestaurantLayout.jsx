@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Utensils, ClipboardList, Table2, LogOut, Store } from 'lucide-react';
+import { LayoutDashboard, Utensils, ClipboardList, Table2, LogOut, Store, Settings } from 'lucide-react';
 import { useAuth } from '../../lib/auth.jsx';
 
 export default function RestaurantLayout() {
@@ -35,6 +35,7 @@ export default function RestaurantLayout() {
           <NavLink to="/restaurant/orders" className={linkClass}><ClipboardList className="w-4 h-4" /> Orders</NavLink>
           <NavLink to="/restaurant/menu" className={linkClass}><Utensils className="w-4 h-4" /> Menu</NavLink>
           <NavLink to="/restaurant/tables" className={linkClass}><Table2 className="w-4 h-4" /> Tables & QR</NavLink>
+          <NavLink to="/restaurant/settings" className={linkClass}><Settings className="w-4 h-4" /> Settings</NavLink>
         </nav>
         <div className="p-3 border-t border-ink-700">
           <div className="px-3 py-2 mb-2">
@@ -57,6 +58,7 @@ export default function RestaurantLayout() {
           <NavLink to="/restaurant/orders" className={({isActive}) => `px-3 py-1.5 text-xs rounded-lg whitespace-nowrap ${isActive ? 'bg-orange-500 text-white' : 'text-ink-200'}`}>Orders</NavLink>
           <NavLink to="/restaurant/menu" className={({isActive}) => `px-3 py-1.5 text-xs rounded-lg whitespace-nowrap ${isActive ? 'bg-orange-500 text-white' : 'text-ink-200'}`}>Menu</NavLink>
           <NavLink to="/restaurant/tables" className={({isActive}) => `px-3 py-1.5 text-xs rounded-lg whitespace-nowrap ${isActive ? 'bg-orange-500 text-white' : 'text-ink-200'}`}>Tables</NavLink>
+          <NavLink to="/restaurant/settings" className={({isActive}) => `px-3 py-1.5 text-xs rounded-lg whitespace-nowrap ${isActive ? 'bg-orange-500 text-white' : 'text-ink-200'}`}>Settings</NavLink>
         </div>
         <main className="p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
           <Outlet />
