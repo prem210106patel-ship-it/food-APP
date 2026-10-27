@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ShoppingCart, Loader2, Search } from 'lucide-react';
-import { supabase, formatCurrency, formatDateTime } from '../../../lib/supabase.js';
-import { ORDER_STATUSES, PAYMENT_METHODS } from '../../../lib/utils.js';
+import { supabase, formatCurrency, formatDateTime } from '../../lib/supabase.js';
+import { ORDER_STATUSES, PAYMENT_METHODS } from '../../lib/utils.js';
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);

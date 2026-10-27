@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Utensils, Mail, Phone, MapPin, Instagram, Twitter, Facebook } from 'lucide-react';
+import { Utensils, Mail, Phone, MapPin, Globe, Send, Share2 } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -48,9 +48,9 @@ export default function Footer() {
               <li className="flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-400" /> Bengaluru, India</li>
             </ul>
             <div className="flex gap-3 mt-4">
-              <a href="#" className="w-8 h-8 rounded-lg bg-ink-700 hover:bg-orange-500 flex items-center justify-center transition-colors" aria-label="Instagram"><Instagram className="w-4 h-4" /></a>
-              <a href="#" className="w-8 h-8 rounded-lg bg-ink-700 hover:bg-orange-500 flex items-center justify-center transition-colors" aria-label="Twitter"><Twitter className="w-4 h-4" /></a>
-              <a href="#" className="w-8 h-8 rounded-lg bg-ink-700 hover:bg-orange-500 flex items-center justify-center transition-colors" aria-label="Facebook"><Facebook className="w-4 h-4" /></a>
+              <a href="#" className="w-8 h-8 rounded-lg bg-ink-700 hover:bg-orange-500 flex items-center justify-center transition-colors" aria-label="Instagram"><Globe className="w-4 h-4" /></a>
+              <a href="#" className="w-8 h-8 rounded-lg bg-ink-700 hover:bg-orange-500 flex items-center justify-center transition-colors" aria-label="Updates"><Send className="w-4 h-4" /></a>
+              <a href="#" className="w-8 h-8 rounded-lg bg-ink-700 hover:bg-orange-500 flex items-center justify-center transition-colors" aria-label="Share"><Share2 className="w-4 h-4" /></a>
             </div>
           </div>
         </div>

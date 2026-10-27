@@ -4,8 +4,9 @@ import { Package, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Store } fro
 import { supabase, formatCurrency, formatDateTime } from '../lib/supabase.js';
 import { ORDER_STATUSES, PAYMENT_METHODS, hashToken } from '../lib/utils.js';
 
-export default function OrderTracking() {
-  const { token } = useParams();
+export default function OrderTracking({ token: tokenProp }) {
+  const { token: tokenParam } = useParams();
+  const token = tokenProp || tokenParam;
   const [order, setOrder] = useState(null);
   const [items, setItems] = useState([]);
   const [history, setHistory] = useState([]);

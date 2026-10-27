@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Trash2, QrCode, Download, Loader2, Table2, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { supabase } from '../../../lib/supabase.js';
-import { useAuth } from '../../../lib/auth.jsx';
-import { generateToken, hashToken } from '../../../lib/utils.js';
+import { supabase } from '../../lib/supabase.js';
+import { useAuth } from '../../lib/auth.jsx';
+import { generateToken, hashToken } from '../../lib/utils.js';
 
 export default function RestaurantTables() {
   const { user } = useAuth();

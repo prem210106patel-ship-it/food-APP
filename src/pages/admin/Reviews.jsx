@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Star, Check, X, Loader2 } from 'lucide-react';
-import { supabase, formatDateTime } from '../../../lib/supabase.js';
+import { supabase, formatDateTime } from '../../lib/supabase.js';
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);

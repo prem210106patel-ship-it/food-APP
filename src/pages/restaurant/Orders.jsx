@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Check, X, Loader2, Clock, Filter } from 'lucide-react';
-import { supabase, formatCurrency, formatDateTime } from '../../../lib/supabase.js';
-import { useAuth } from '../../../lib/auth.jsx';
-import { ORDER_STATUSES } from '../../../lib/utils.js';
+import { Check, X, Loader2, Clock, Filter, BadgeCheck } from 'lucide-react';
+import { supabase, formatCurrency, formatDateTime } from '../../lib/supabase.js';
+import { useAuth } from '../../lib/auth.jsx';
+import { ORDER_STATUSES } from '../../lib/utils.js';
 
 const STATUS_FLOW = {
   pending: ['confirmed', 'rejected'],
@@ -66,6 +66,17 @@ export default function RestaurantOrders() {
     setItems(data || []);
   };
 
+  const verifyPayment = async (orderId) => {
+    const { error: payErr } = await supabase.from('payments').update({ status: 'paid' }).eq('order_id', orderId).eq('provider', 'upi_qr');
+    if (payErr) { alert('Could not verify payment: ' + payErr.message); return; }
+    const { error: ordErr } = await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', orderId);
+    if (ordErr) { alert('Could not update order: ' + ordErr.message); return; }
+    load();
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder({ ...selectedOrder, payment_status: 'paid' });
+    }
+  };
+
   if (loading && orders.length === 0) return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-orange-500 animate-spin" /></div>;
 
   return (
@@ -92,7 +103,9 @@ export default function RestaurantOrders() {
                     </span>
                   </div>
                   <p className="text-xs text-ink-400 mt-1">{o.customer?.name || 'Guest'} • {formatDateTime(o.created_at)}</p>
-                  <p className="text-xs text-ink-500 mt-1">{o.payment_method} • {o.payment_status}</p>
+                  <p className="text-xs text-ink-500 mt-1">{o.payment_method} • {o.payment_status}{o.payment_method === 'upi_qr' && o.payment_status !== 'paid' && (
+                    <button onClick={(e) => { e.stopPropagation(); verifyPayment(o.id); }} className="ml-2 text-green-600 font-semibold hover:underline">Verify</button>
+                  )}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
@@ -152,6 +165,17 @@ export default function RestaurantOrders() {
               {selectedOrder.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-{formatCurrency(selectedOrder.discount)}</span></div>}
               <div className="flex justify-between font-bold"><span className="text-charcoal-800">Total</span><span className="text-orange-600">{formatCurrency(selectedOrder.total)}</span></div>
             </div>
+            {selectedOrder.payment_method === 'upi_qr' && selectedOrder.payment_status !== 'paid' && (
+              <button onClick={() => verifyPayment(selectedOrder.id)} className="flex items-center justify-center gap-1.5 w-full py-2.5 mb-3 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700">
+                <BadgeCheck className="w-4 h-4" /> Verify UPI Payment Received
+              </button>
+            )}
+            {selectedOrder.payment_status === 'paid' && (
+              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg mb-3">
+                <BadgeCheck className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700">Payment verified</span>
+              </div>
+            )}
             {STATUS_FLOW[selectedOrder.status]?.length > 0 && (
               <div className="flex gap-2 mt-4">
                 {STATUS_FLOW[selectedOrder.status].map((next) => (

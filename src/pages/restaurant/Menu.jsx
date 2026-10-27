@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Trash2, Edit3, X, Loader2, Utensils, FolderPlus } from 'lucide-react';
-import { supabase, formatCurrency } from '../../../lib/supabase.js';
-import { useAuth } from '../../../lib/auth.jsx';
-import { DIETARY_LABELS, slugify } from '../../../lib/utils.js';
+import { supabase, formatCurrency } from '../../lib/supabase.js';
+import { useAuth } from '../../lib/auth.jsx';
+import { DIETARY_LABELS, slugify } from '../../lib/utils.js';
 
 export default function RestaurantMenu() {
   const { user } = useAuth();

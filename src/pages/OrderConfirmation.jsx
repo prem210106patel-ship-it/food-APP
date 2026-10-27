@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle, Package, Clock, MapPin, ArrowRight, QrCode as QrIcon, Download } from 'lucide-react';
+import { CheckCircle, Package, Clock, MapPin, ArrowRight, QrCode as QrIcon, Download, Loader2, Info } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase, formatCurrency, formatDateTime } from '../lib/supabase.js';
 import { ORDER_STATUSES, PAYMENT_METHODS } from '../lib/utils.js';
@@ -12,30 +12,48 @@ export default function OrderConfirmation() {
   const [order, setOrder] = useState(null);
   const [items, setItems] = useState([]);
   const [restaurant, setRestaurant] = useState(null);
+  const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showQR, setShowQR] = useState(false);
+  const [showTrackQR, setShowTrackQR] = useState(false);
+
+  const loadOrder = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*, restaurant:restaurants(*)')
+      .eq('order_number', orderNumber)
+      .maybeSingle();
+
+    if (data) {
+      setOrder(data);
+      setRestaurant(data.restaurant);
+      const [itemsRes, payRes] = await Promise.all([
+        supabase.from('order_items').select('*').eq('order_id', data.id),
+        supabase.from('payments').select('*').eq('order_id', data.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      setItems(itemsRes.data || []);
+      if (payRes.data) setPayment(payRes.data);
+    }
+    setLoading(false);
+  }, [orderNumber]);
 
   useEffect(() => {
-    async function loadOrder() {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*, restaurant:restaurants(*)')
-        .eq('order_number', orderNumber)
-        .maybeSingle();
-
-      if (data) {
-        setOrder(data);
-        setRestaurant(data.restaurant);
-        const { data: itemsData } = await supabase
-          .from('order_items')
-          .select('*')
-          .eq('order_id', data.id);
-        setItems(itemsData || []);
-      }
-      setLoading(false);
-    }
     loadOrder();
-  }, [orderNumber]);
+    const interval = setInterval(loadOrder, 8000);
+    return () => clearInterval(interval);
+  }, [loadOrder]);
+
+  const downloadQR = (svgId, filename) => {
+    const svg = document.getElementById(svgId);
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return <div className="max-w-2xl mx-auto px-4 py-20"><div className="h-48 skeleton rounded-2xl" /></div>;
@@ -51,6 +69,16 @@ export default function OrderConfirmation() {
   }
 
   const trackingUrl = trackingToken ? `${window.location.origin}/track/${trackingToken}` : null;
+  const isUpi = order.payment_method === 'upi_qr';
+  const isPaid = order.payment_status === 'paid';
+  const upiVpa = restaurant?.upi_vpa;
+  const upiAmount = (order.total / 100).toFixed(2);
+  const upiId = upiVpa || 'foodiehub@upi';
+  const upiNote = `FoodieHub Order ${order.order_number}`;
+  const upiDeepLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restaurant?.name || 'FoodieHub')}&am=${upiAmount}&cu=INR&tn=${encodeURIComponent(upiNote)}`;
+  const paymentStatusBadge = isPaid
+    ? { text: 'Payment Verified', cls: 'bg-green-100 text-green-700' }
+    : { text: 'Payment Pending Verification', cls: 'bg-amber-100 text-amber-700' };
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -71,6 +99,10 @@ export default function OrderConfirmation() {
           <div className="flex justify-between"><span className="text-ink-500">Restaurant</span><span className="font-medium text-ink-800">{restaurant?.name}</span></div>
           <div className="flex justify-between"><span className="text-ink-500">Status</span><span className="font-medium text-orange-600">{ORDER_STATUSES[order.status]?.label}</span></div>
           <div className="flex justify-between"><span className="text-ink-500">Payment</span><span className="font-medium text-ink-800">{PAYMENT_METHODS[order.payment_method]}</span></div>
+          <div className="flex justify-between items-center">
+            <span className="text-ink-500">Payment status</span>
+            <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${paymentStatusBadge.cls}`}>{paymentStatusBadge.text}</span>
+          </div>
           <div className="flex justify-between"><span className="text-ink-500">Placed at</span><span className="font-medium text-ink-800">{formatDateTime(order.created_at)}</span></div>
           {order.delivery_address_snapshot && (
             <div className="pt-2 border-t border-ink-100">
@@ -81,6 +113,48 @@ export default function OrderConfirmation() {
           )}
         </div>
       </div>
+
+      {isUpi && (
+        <div className="bg-white rounded-xl border border-ink-100 p-5 mb-4">
+          <h2 className="font-bold font-display text-charcoal-800 mb-3 flex items-center gap-2"><QrIcon className="w-5 h-5 text-orange-500" /> UPI Payment</h2>
+          {isPaid ? (
+            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-700">Payment verified</p>
+                <p className="text-xs text-green-600 mt-0.5">The restaurant confirmed your UPI payment. You'll receive your order shortly.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="p-3 bg-white border-2 border-orange-200 rounded-xl">
+                  <QRCodeSVG id="upi-qr-svg" value={upiDeepLink} size={170} level="M" />
+                </div>
+                <button onClick={() => downloadQR('upi-qr-svg', `upi-payment-${order.order_number}.svg`)} className="flex items-center gap-1.5 text-xs text-orange-600 font-medium">
+                  <Download className="w-3.5 h-3.5" /> Download QR
+                </button>
+              </div>
+              <div className="flex-1 w-full">
+                <div className="space-y-1.5 text-sm mb-3">
+                  <div className="flex justify-between"><span className="text-ink-500">Amount</span><span className="font-bold text-orange-600">{formatCurrency(order.total)}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-500">Pay to</span><span className="font-mono text-xs text-ink-700">{upiId}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-500">Reference</span><span className="font-mono text-xs text-ink-700">{order.order_number}</span></div>
+                </div>
+                <a href={upiDeepLink} className="block text-center w-full py-2.5 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 mb-2">
+                  Open in UPI App
+                </a>
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-700 leading-relaxed">
+                    Pay using any UPI app (GPay, PhonePe, Paytm). Your payment stays <strong>pending</strong> until the restaurant verifies it. Do not share OTPs — FoodieHub will never ask for one.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-ink-100 p-5 mb-4">
         <h2 className="font-bold font-display text-charcoal-800 mb-3">Items</h2>
@@ -104,17 +178,22 @@ export default function OrderConfirmation() {
         <div className="bg-white rounded-xl border border-ink-100 p-5 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold font-display text-charcoal-800 flex items-center gap-2"><QrIcon className="w-5 h-5 text-orange-500" /> Track Your Order</h2>
-            <button onClick={() => setShowQR(!showQR)} className="text-sm text-orange-600 font-medium">{showQR ? 'Hide' : 'Show QR'}</button>
+            <button onClick={() => setShowTrackQR(!showTrackQR)} className="text-sm text-orange-600 font-medium">{showTrackQR ? 'Hide' : 'Show QR'}</button>
           </div>
-          {showQR && (
+          {showTrackQR && (
             <div className="flex flex-col items-center gap-3 animate-fade-in">
               <div className="p-4 bg-white border-2 border-orange-200 rounded-xl">
-                <QRCodeSVG value={trackingUrl} size={180} level="M" />
+                <QRCodeSVG id="track-qr-svg" value={trackingUrl} size={180} level="M" />
               </div>
               <p className="text-xs text-ink-400 text-center max-w-xs">Scan this QR code to track your order status. The link is secure and tied to this order only.</p>
-              <a href={trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 font-medium flex items-center gap-1">
-                Open tracking page <ArrowRight className="w-4 h-4" />
-              </a>
+              <div className="flex gap-3">
+                <button onClick={() => downloadQR('track-qr-svg', `track-${order.order_number}.svg`)} className="text-sm text-orange-600 font-medium flex items-center gap-1">
+                  <Download className="w-4 h-4" /> Download
+                </button>
+                <a href={trackingUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 font-medium flex items-center gap-1">
+                  Open tracking page <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
             </div>
           )}
         </div>

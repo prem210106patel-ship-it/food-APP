@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Users, Store, ShoppingCart, TrendingUp, Loader2 } from 'lucide-react';
-import { supabase, formatCurrency } from '../../../lib/supabase.js';
+import { supabase, formatCurrency } from '../../lib/supabase.js';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);

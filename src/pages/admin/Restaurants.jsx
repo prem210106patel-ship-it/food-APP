@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Check, X, Store, Loader2, Search } from 'lucide-react';
-import { supabase, formatCurrency } from '../../../lib/supabase.js';
+import { supabase, formatCurrency } from '../../lib/supabase.js';
 
 export default function AdminRestaurants() {
   const [restaurants, setRestaurants] = useState([]);

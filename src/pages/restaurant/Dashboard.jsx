@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, TrendingUp, Clock, Utensils, AlertCircle, Store } from 'lucide-react';
-import { supabase, formatCurrency, formatDateTime } from '../../../lib/supabase.js';
-import { useAuth } from '../../../lib/auth.jsx';
-import { ORDER_STATUSES } from '../../../lib/utils.js';
+import { supabase, formatCurrency, formatDateTime } from '../../lib/supabase.js';
+import { useAuth } from '../../lib/auth.jsx';
+import { ORDER_STATUSES } from '../../lib/utils.js';
 
 export default function RestaurantDashboard() {
   const { user } = useAuth();

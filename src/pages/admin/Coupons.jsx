@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Trash2, Loader2, Ticket, Edit3, X } from 'lucide-react';
-import { supabase, formatCurrency } from '../../../lib/supabase.js';
-import { CUISINES } from '../../../lib/utils.js';
+import { supabase, formatCurrency } from '../../lib/supabase.js';
+import { CUISINES } from '../../lib/utils.js';
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
